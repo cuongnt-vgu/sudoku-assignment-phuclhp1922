@@ -38,12 +38,12 @@ int find_naked_pairs(Cell **p_cells, NakedPairs *p_naked_pairs, int *p_counter)
                         // Update both value                 
                         p_naked_pairs[*p_counter].value_1 = candidates_1[0]; 
                         p_naked_pairs[*p_counter].value_2 = candidates_1[1]; 
-                        free(candidates_1); 
-                        free(candidates_2);
 
                         // Update the storing array and increment the counter                  
                         (*p_counter)++;
                     } 
+                    free(candidates_1); 
+                    free(candidates_2);
                 }
             }
         }
