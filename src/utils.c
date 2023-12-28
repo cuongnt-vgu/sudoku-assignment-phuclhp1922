@@ -75,8 +75,11 @@ void set_candidate(Cell *cell, int value)
 
 void unset_candidate(Cell *cell, int value)
 {
-    cell->candidates[value - 1] = 0;
-    cell->num_candidates -= 1;
+    if (cell->candidates[value - 1] == 1)
+    {
+        cell->candidates[value - 1] = 0;
+        cell->num_candidates -= 1;
+    }
 }
 
 bool is_candidate(Cell *cell, int value)

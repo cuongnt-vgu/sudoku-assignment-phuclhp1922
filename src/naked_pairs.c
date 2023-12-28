@@ -11,36 +11,39 @@ int find_naked_pairs(Cell **p_cells, NakedPairs *p_naked_pairs, int *p_counter)
         {
             for (int j = i + 1; j <= 8; j++)
             {
-                if ( (p_cells[i]->num_candidates == 2) && (p_cells[i]->num_candidates == p_cells[j]->num_candidates) && (memcmp(get_candidates(p_cells[i]), get_candidates(p_cells[j]), 2 * sizeof(int))) )
+                if ( (p_cells[i]->num_candidates == 2) && (p_cells[i]->num_candidates == p_cells[j]->num_candidates) )
                 {
-                    // Update cells 
-                    NakedPairs new_naked_pairs; 
-                    new_naked_pairs.p_cell_1 = p_cells[i]; 
-                    new_naked_pairs.p_cell_2 = p_cells[j]; 
-                    
-                    // Check if the pair belongs to the row, the column, or the box
-                    if (p_cells[i]->row_index == p_cells[j]->row_index)
+                    int *candidates_1 = get_candidates(p_cells[i]); 
+                    int *candidates_2 = get_candidates(p_cells[j]); 
+                    if ((candidates_1[0] == candidates_2[0]) && (candidates_1[1] == candidates_2[1]))
                     {
-                        new_naked_pairs.row = p_cells[i]->row_index;
-                    }
-                    else if (p_cells[i]->col_index == p_cells[j]->col_index)
-                    {
-                        new_naked_pairs.col = p_cells[i]->col_index;
-                    }
-                    else if (p_cells[i]->box_index == p_cells[j]->box_index)
-                    {
-                        new_naked_pairs.box = p_cells[i]->box_index;
-                    }
-                    
-                    // Update both value
-                    int *candidates = get_candidates(p_cells[i]); 
-                    new_naked_pairs.value_1 = candidates[0]; 
-                    new_naked_pairs.value_2 = candidates[1]; 
-                    free(candidates); 
+                        // Update cells 
+                        p_naked_pairs[*p_counter].p_cell_1 = p_cells[i]; 
+                        p_naked_pairs[*p_counter].p_cell_2 = p_cells[j]; 
+                        
+                        // Check if the pair belongs to the row, the column, or the box
+                        if (p_cells[i]->row_index == p_cells[j]->row_index)
+                        {
+                            p_naked_pairs[*p_counter].row = p_cells[i]->row_index;
+                        }
+                        if (p_cells[i]->col_index == p_cells[j]->col_index)
+                        {
+                            p_naked_pairs[*p_counter].col = p_cells[i]->col_index;
+                        }
+                        if (p_cells[i]->box_index == p_cells[j]->box_index)
+                        {
+                            p_naked_pairs[*p_counter].box = p_cells[i]->box_index;
+                        }
+                        
+                        // Update both value                 
+                        p_naked_pairs[*p_counter].value_1 = candidates_1[0]; 
+                        p_naked_pairs[*p_counter].value_2 = candidates_1[1]; 
+                        free(candidates_1); 
+                        free(candidates_2);
 
-                    // Update the storing array and increment the counter 
-                    p_naked_pairs[*p_counter] = new_naked_pairs; 
-                    *p_counter += 1; 
+                        // Update the storing array and increment the counter                  
+                        (*p_counter)++;
+                    } 
                 }
             }
         }
@@ -55,9 +58,9 @@ int naked_pairs(SudokuBoard *p_board)
 
     // param *p_board: the pointer to the sudoku board. 
 
-    NakedPairs naked_pairs[BOARD_SIZE * BOARD_SIZE]; 
+    NakedPairs naked_pairs[BOARD_SIZE * BOARD_SIZE / 2]; 
 
-    for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++)
+    for (int i = 0; i < BOARD_SIZE * BOARD_SIZE / 2; i++)
     {
         naked_pairs[i].row = 9; 
         naked_pairs[i].col = 9; 
@@ -75,9 +78,11 @@ int naked_pairs(SudokuBoard *p_board)
         find_naked_pairs(p_board->p_boxes[i], naked_pairs, &counter);  
     }
 
+    int overlap = 0; 
     // Loop 
     for (int i = 0; i < counter; i++)
     {
+        int is_overlap = 1; 
         if (naked_pairs[i].row != 9)
         {
             for (int j = 0; j <= 8; j++)
@@ -88,7 +93,8 @@ int naked_pairs(SudokuBoard *p_board)
                     {
                         if ((value + 1 == naked_pairs[i].value_1) || (value + 1 == naked_pairs[i].value_2))
                         {
-                            unset_candidate(p_board->p_rows[naked_pairs[i].row][j], value + 1);
+                            unset_candidate(p_board->p_rows[naked_pairs[i].row][j], value);
+                            is_overlap = 0; 
                         }
                     }
                 }
@@ -104,7 +110,8 @@ int naked_pairs(SudokuBoard *p_board)
                     {
                         if ((value + 1 == naked_pairs[i].value_1) || (value + 1 == naked_pairs[i].value_2))
                         {
-                            unset_candidate(p_board->p_rows[naked_pairs[i].col][j], value + 1);
+                            unset_candidate(p_board->p_cols[naked_pairs[i].col][j], value + 1);
+                            is_overlap = 0;
                         }
                     }
                 }
@@ -120,13 +127,15 @@ int naked_pairs(SudokuBoard *p_board)
                     {
                         if ((value + 1 == naked_pairs[i].value_1) || (value + 1 == naked_pairs[i].value_2))
                         {
-                            unset_candidate(p_board->p_boxes[naked_pairs[i].box][j], value + 1);
+                            unset_candidate(p_board->p_boxes[naked_pairs[i].box][j], value);
+                            is_overlap = 0;
                         }
                     }
                 }
             }
         }
+        overlap += is_overlap; 
     }
 
-    return counter;
+    return counter - overlap; 
 }
